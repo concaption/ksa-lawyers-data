@@ -1,9 +1,10 @@
+import pandas as pd
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.options import Options
-
+from tqdm import tqdm
 
 # Set up Chrome options
 chrome_options = Options()
@@ -15,40 +16,62 @@ chrome_options.add_argument("--disable-dev-shm-usage")
 service = Service(ChromeDriverManager().install())
 driver = webdriver.Chrome(service=service, options=chrome_options)
 
-# Define the URL of the page
-url = "https://eservice.sba.gov.sa/en/directory/7"  # Replace with the actual URL
+# Load URLs from Excel file
+df_urls = pd.read_excel('Law_Firm_Links.xlsx', sheet_name='SheetJS')  # Ensure the correct sheet name
+urls = df_urls['Url'].tolist()
 
-# Open the URL
-driver.get(url)
+# Prepare a list to store scraped data
+data = []
 
-# Function to extract and print information
-def extract_info():
-    # Extract the name of the firm
-    firm_name = driver.find_element(By.CSS_SELECTOR, '.navy-text.pt-5').text
-    print(f"Firm Name: {firm_name}")
+# Function to extract information
+def extract_info(url):
+    driver.get(url)
     
-    # Extract the email
-    email = driver.find_element(By.CSS_SELECTOR, 'a[href^="mailto"]').text
-    print(f"Email: {email}")
-    
-    # Extract the phone number
-    phone = driver.find_element(By.CSS_SELECTOR, 'a[href^="tel"]').text
-    print(f"Phone: {phone}")
-    
-    # Extract address
-    address_elements = driver.find_elements(By.CSS_SELECTOR, '.card-body ul li span')
-    address = ', '.join([element.text for element in address_elements])
-    print(f"Address: {address}")
-    
-    # Extract services
-    services_elements = driver.find_elements(By.CSS_SELECTOR, '.badge.badge-pill.badge-info a')
-    services = [element.text for element in services_elements]
-    print("Services:")
-    for service in services:
-        print(f"  - {service}")
+    try:
+        firm_name = driver.find_element(By.CSS_SELECTOR, '.navy-text.pt-5').text
+    except:
+        firm_name = "N/A"
+        
+    try:
+        email = driver.find_element(By.CSS_SELECTOR, 'a[href^="mailto"]').text
+    except:
+        email = "N/A"
+        
+    try:
+        phone = driver.find_element(By.CSS_SELECTOR, 'a[href^="tel"]').text
+    except:
+        phone = "N/A"
+        
+    try:
+        address_elements = driver.find_elements(By.CSS_SELECTOR, '.card-body ul li span')
+        address = ', '.join([element.text for element in address_elements])
+    except:
+        address = "N/A"
+        
+    try:
+        services_elements = driver.find_elements(By.CSS_SELECTOR, '.badge.badge-pill.badge-info a')
+        services = [element.text for element in services_elements]
+    except:
+        services = []
 
-# Call the function to extract information
-extract_info()
+    return {
+        "URL": url,
+        "Firm Name": firm_name,
+        "Email": email,
+        "Phone": phone,
+        "Address": address,
+        "Services": ', '.join(services)
+    }
+
+# Iterate over URLs and scrape data
+for url in tqdm(urls, desc="Scraping"):
+    info = extract_info(url)
+    data.append(info)
+    # Save progress to Excel after each iteration
+    df_data = pd.DataFrame(data)
+    df_data.to_excel('Scraped_Law_Firm_Data.xlsx', index=False)
 
 # Close the driver
 driver.quit()
+
+print("Scraping completed and data saved to 'Scraped_Law_Firm_Data.xlsx'.")
