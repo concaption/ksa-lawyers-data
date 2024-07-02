@@ -20,13 +20,18 @@ driver = webdriver.Chrome(service=service, options=chrome_options)
 df_urls = pd.read_excel('Law_Firm_Links.xlsx', sheet_name='SheetJS')  # Ensure the correct sheet name
 urls = df_urls['Url'].tolist()
 
+
+try:
+    previous_data = pd.read_excel('Scraped_Law_Firm_Data_3.xlsx', sheet_name='Sheet1')  # Ensure the correct sheet name
+except FileNotFoundError:
+    previous_data = pd.DataFrame(columns=["URL", "Firm Name", "Email", "Phone", "Address", "Services"])
+
 # Prepare a list to store scraped data
 data = []
 
 # Function to extract information
 def extract_info(url):
     driver.get(url)
-    
     try:
         firm_name = driver.find_element(By.CSS_SELECTOR, '.navy-text.pt-5').text
     except:
@@ -65,11 +70,12 @@ def extract_info(url):
 
 # Iterate over URLs and scrape data
 for url in tqdm(urls, desc="Scraping"):
-    info = extract_info(url)
-    data.append(info)
-    # Save progress to Excel after each iteration
-    df_data = pd.DataFrame(data)
-    df_data.to_excel('Scraped_Law_Firm_Data.xlsx', index=False)
+    if url not in previous_data['URL'].values:
+        info = extract_info(url)
+        data.append(info)
+        new_df = pd.DataFrame([info])
+        previous_data = pd.concat([previous_data, new_df], ignore_index=True)
+        previous_data.to_excel('Scraped_Law_Firm_Data_3.xlsx', index=False)
 
 # Close the driver
 driver.quit()
