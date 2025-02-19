@@ -1,0 +1,14 @@
+{
+    "customizations": {
+    "codespaces": {},
+    "vscode": {
+    "extensions": [
+    "ms-python.python",
+    "ms-toolsai.jupyter",
+    "github.copilot",
+    "ms-vscode.makefile-tools",
+    "twixes.pypi-assistant"
+    ]
+    }
+    }
+    }
