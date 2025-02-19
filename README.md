@@ -40,11 +40,3 @@ ksa-lawyers-data/
 ├── requirements.txt # Python dependencies
 └── Makefile        # Build automation
 ```
-
-## License
-
-This project is private and confidential. All rights reserved.
-
-## Contributing
-
-Please read the contribution guidelines before submitting any changes.
